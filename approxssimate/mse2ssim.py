@@ -5,6 +5,19 @@ from scipy.ndimage import uniform_filter
 from skimage.util import crop
 import time
 
+# This implementation is based on the SSIM approximation method described in:
+#
+#   Martini, M. G., “Measuring Objective Image and Video Quality:
+#   On the Relationship Between SSIM and PSNR for DCT-Based Compressed Images,”
+#   IEEE Transactions on Instrumentation and Measurement, vol. 74, pp. 1–13, 2025.
+#   DOI: 10.1109/TIM.2025.3529045
+#
+# The implementation structure is adapted from the reference SSIM implementation
+# in scikit-image (skimage.metrics.structural_similarity):
+# https://scikit-image.org/
+#
+# The code has been modified to estimate SSIM from local MSE and local
+# variances instead of computing the full SSIM formulation.
 def mse2ssim(ref_img, dist_imgs, win_size=7):
     if win_size % 2 == 0 or win_size < 3:
         raise ValueError("win_size must be an odd integer >= 3.")
