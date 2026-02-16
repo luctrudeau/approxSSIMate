@@ -78,13 +78,13 @@ def ssim_global_mse(ref_img, dist_imgs, win_size=7, data_range=255.0):
     uxx = uniform_filter(ref * ref, size=win_size)
     vx = cov_norm * (uxx - ux * ux)
     B2 = vx + vx + C2
-    B2 = crop(B2, pad).mean(dtype=np.float64)
+    B2_inv = crop(1.0 / B2, pad).mean(dtype=np.float64)
 
     out = []
     for d in dists:
         mse = np.mean((ref - d) ** 2)
         A2 = mse
-        S = 1 - (A2 / B2)
+        S = 1.0 - A2 * B2_inv
         out.append(S)
 
     return np.asarray(out, dtype=np.float64)
