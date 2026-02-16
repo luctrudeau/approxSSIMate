@@ -33,6 +33,13 @@ def ssim_reference(ref_img, dist_imgs, win_size=7, data_range=255.0):
         out.append(float(score))
     return np.asarray(out, dtype=np.float64)
 
+def _reference_statistics(ref, win_size, data_range):
+    NP = win_size * win_size
+    cov_norm = NP / (NP - 1)
+    ux = uniform_filter(ref, size=win_size)
+    uxx = uniform_filter(ref * ref, size=win_size)
+    return np.maximum(cov_norm * (uxx - ux * ux), 0.0)
+
 # This implementation is based on the SSIM approximation method described in:
 #
 #   Martini, M. G., “Measuring Objective Image and Video Quality:
@@ -48,19 +55,17 @@ def ssim_reference(ref_img, dist_imgs, win_size=7, data_range=255.0):
 # variances instead of computing the full SSIM formulation.
 def ssim_local_mse(ref_img, dist_imgs, win_size=7, data_range=255.0):
     ref, dists = _check_inputs(ref_img, dist_imgs, win_size, data_range=data_range)
-    pad = (win_size - 1) // 2
-    NP = win_size * win_size
-    cov_norm = NP / (NP - 1)
+    vx = _reference_statistics(ref, win_size, data_range)
     C2 = (0.03 * data_range) ** 2
-
-    ux = uniform_filter(ref, size=win_size)
-    uxx = uniform_filter(ref * ref, size=win_size)
-    vx = cov_norm * (uxx - ux * ux)
     B2 = vx + vx + C2
+    pad = (win_size - 1) // 2
 
+    diff = np.empty_like(ref)
     out = []
     for d in dists:
-        uee = uniform_filter((ref - d) ** 2, size=win_size)
+        np.subtract(ref, d, out=diff)
+        np.square(diff, out=diff)
+        uee = uniform_filter(diff, size=win_size)
         A2 = uee
         S = A2 / B2
         out.append(1 - crop(S, pad).mean(dtype=np.float64))
@@ -69,24 +74,42 @@ def ssim_local_mse(ref_img, dist_imgs, win_size=7, data_range=255.0):
 
 def ssim_global_mse(ref_img, dist_imgs, win_size=7, data_range=255.0):
     ref, dists = _check_inputs(ref_img, dist_imgs, win_size, data_range=data_range)
-    pad = (win_size - 1) // 2
-    NP = win_size * win_size
-    cov_norm = NP / (NP - 1)
+    vx = _reference_statistics(ref, win_size, data_range)
     C2 = (0.03 * data_range) ** 2
-
-    ux = uniform_filter(ref, size=win_size)
-    uxx = uniform_filter(ref * ref, size=win_size)
-    vx = cov_norm * (uxx - ux * ux)
     B2 = vx + vx + C2
+    pad = (win_size - 1) // 2
     B2_inv = crop(1.0 / B2, pad).mean(dtype=np.float64)
 
+    diff = np.empty_like(ref)
     out = []
     for d in dists:
-        mse = np.mean((ref - d) ** 2)
-        A2 = mse
+        np.subtract(ref, d, out=diff)
+        np.multiply(diff, diff, out=diff)
+        A2 = diff.mean(dtype=np.float64)
         S = 1.0 - A2 * B2_inv
         out.append(S)
 
+    return np.asarray(out, dtype=np.float64)
+
+def ssim_global_mse_var(ref_img, dist_imgs, win_size=7, data_range=255.0, beta=0.46, eps=1e-6):
+    ref, dists = _check_inputs(ref_img, dist_imgs, win_size, data_range=data_range)
+    vx = _reference_statistics(ref, win_size, data_range)
+    C2 = (0.03 * data_range) ** 2
+    B2 = vx + vx + C2
+    pad = (win_size - 1) // 2
+    weights = (vx + eps) ** beta
+    wmean = weights.mean(dtype=np.float64) + 1e-10
+    inv = weights / (wmean * B2)
+    k = crop(inv, pad).mean(dtype=np.float64)
+
+    diff = np.empty_like(ref)
+    out = []
+    for d in dists:
+        np.subtract(ref, d, out=diff)
+        np.multiply(diff, diff, out=diff)
+        mse = diff.mean(dtype=np.float64)
+        out.append(1.0 - k * mse)
+        
     return np.asarray(out, dtype=np.float64)
 
 def _load_image(path):
@@ -112,6 +135,9 @@ def main():
     p_glo = subparsers.add_parser("global-mse", help="Compute SSIM approximation using global MSE")
     add_common_args(p_glo)
 
+    p_glo_v = subparsers.add_parser("global-mse-var", help="Variance-weighted approximation of local MSE from global MSE")
+    add_common_args(p_glo_v)
+
     args = parser.parse_args()
 
     ref_img = _load_image(args.ref)
@@ -123,6 +149,8 @@ def main():
         fn = ssim_local_mse
     elif args.cmd == "global-mse":
         fn = ssim_global_mse
+    elif args.cmd == "global-mse-var":
+        fn = ssim_global_mse_var
     else:
         raise RuntimeError("Unknown command")
 
