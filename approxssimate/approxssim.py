@@ -1,3 +1,21 @@
+"""
+ApproxSSIMate – SSIM approximation from global MSE.
+
+Implements:
+  - Local-MSE-based SSIM approximation
+  - Variance-weighted global MSE approximation
+  - Standard-deviation-weighted global MSE approximation
+
+Related to the forthcoming paper:
+"A Simple Relationship Between SSIM and PSNR for DCT-Based Compressed Images and Video:
+ Modeling Local Error Statistics"
+
+Copyright (c) 2026, Luc Trudeau and Maria G. Martini
+
+This software is licensed under the BSD 2-Clause License.
+See the LICENSE file in the project root for full license information.
+"""
+
 import argparse
 from PIL import Image
 import numpy as np
