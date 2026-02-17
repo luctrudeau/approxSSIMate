@@ -112,6 +112,27 @@ def ssim_global_mse_var(ref_img, dist_imgs, win_size=7, data_range=255.0, beta=0
         
     return np.asarray(out, dtype=np.float64)
 
+def ssim_global_mse_std(ref_img, dist_imgs, win_size=7, data_range=255.0, beta=0.46, eps=1e-6):
+    ref, dists = _check_inputs(ref_img, dist_imgs, win_size, data_range=data_range)
+    vx = _reference_statistics(ref, win_size, data_range)
+    C2 = (0.03 * data_range) ** 2
+    B2 = vx + vx + C2
+    pad = (win_size - 1) // 2
+    weights = np.sqrt(vx + eps)
+    wmean = weights.mean(dtype=np.float64) + 1e-10
+    inv = weights / (wmean * B2)
+    k = crop(inv, pad).mean(dtype=np.float64)
+
+    diff = np.empty_like(ref)
+    out = []
+    for d in dists:
+        np.subtract(ref, d, out=diff)
+        np.multiply(diff, diff, out=diff)
+        mse = diff.mean(dtype=np.float64)
+        out.append(1.0 - k * mse)
+        
+    return np.asarray(out, dtype=np.float64)
+
 def _load_image(path):
     return np.array(Image.open(path).convert("L"), dtype=np.float64)
 
@@ -138,6 +159,9 @@ def main():
     p_glo_v = subparsers.add_parser("global-mse-var", help="Variance-weighted approximation of local MSE from global MSE")
     add_common_args(p_glo_v)
 
+    p_glo_s = subparsers.add_parser("global-mse-std", help="Standard deviation-weighted approximation of local MSE from global MSE")
+    add_common_args(p_glo_s)
+
     args = parser.parse_args()
 
     ref_img = _load_image(args.ref)
@@ -151,6 +175,8 @@ def main():
         fn = ssim_global_mse
     elif args.cmd == "global-mse-var":
         fn = ssim_global_mse_var
+    elif args.cmd == "global-mse-std":
+        fn = ssim_global_mse_std
     else:
         raise RuntimeError("Unknown command")
 
