@@ -58,20 +58,30 @@ def _reference_statistics(ref, win_size, data_range):
     uxx = uniform_filter(ref * ref, size=win_size)
     return np.maximum(cov_norm * (uxx - ux * ux), 0.0)
 
-# This implementation is based on the SSIM approximation method described in:
-#
-#   Martini, M. G., “Measuring Objective Image and Video Quality:
-#   On the Relationship Between SSIM and PSNR for DCT-Based Compressed Images,”
-#   IEEE Transactions on Instrumentation and Measurement, vol. 74, pp. 1–13, 2025.
-#   DOI: 10.1109/TIM.2025.3529045
-#
-# The implementation structure is adapted from the reference SSIM implementation
-# in scikit-image (skimage.metrics.structural_similarity):
-# https://scikit-image.org/
-#
-# The code has been modified to estimate SSIM from local MSE and local
-# variances instead of computing the full SSIM formulation.
 def ssim_local_mse(ref_img, dist_imgs, win_size=7, data_range=255.0):
+    """
+    Approximate SSIM using local MSE and reference-image statistics.
+
+    This implementation follows the formulation described in:
+
+        Martini, M. G.,
+        "Measuring Objective Image and Video Quality:
+        On the Relationship Between SSIM and PSNR for DCT-Based Compressed Images,"
+        IEEE Transactions on Instrumentation and Measurement, 2025.
+
+    Under the assumption that local means are preserved by compression,
+    SSIM can be approximated as:
+
+        SSIM ~= 1 - MSE_l / (2 * var_x + C2)
+
+    where:
+        - MSE_l is the local window-based mean squared error
+        - var_x is the local variance of the reference image
+        - C2 is the SSIM contrast stabilization constant
+
+    This method requires computing local MSE between the reference and
+    distorted images.
+    """
     ref, dists = _check_inputs(ref_img, dist_imgs, win_size, data_range=data_range)
     vx = _reference_statistics(ref, win_size, data_range)
     C2 = (0.03 * data_range) ** 2
@@ -91,6 +101,24 @@ def ssim_local_mse(ref_img, dist_imgs, win_size=7, data_range=255.0):
     return np.asarray(out, dtype=np.float64)
 
 def ssim_global_mse(ref_img, dist_imgs, win_size=7, data_range=255.0):
+    """
+    Approximate SSIM using global MSE and reference-image statistics only.
+
+    In this simplified model, the local MSE is replaced by the global
+    image-level mean squared error (MSE_G), assuming uniform spatial
+    distribution of distortion.
+
+    The approximation becomes:
+
+        SSIM ~= 1 - MSE_G / (2 * var_x + C2)
+
+    where:
+        - var_x is the local window-based variance of the reference image
+        - C2 is the SSIM contrast stabilization constant
+
+    This approach ignores local distortion structure and serves as a
+    baseline when only global MSE is available.
+    """
     ref, dists = _check_inputs(ref_img, dist_imgs, win_size, data_range=data_range)
     vx = _reference_statistics(ref, win_size, data_range)
     C2 = (0.03 * data_range) ** 2
@@ -110,6 +138,32 @@ def ssim_global_mse(ref_img, dist_imgs, win_size=7, data_range=255.0):
     return np.asarray(out, dtype=np.float64)
 
 def ssim_global_mse_var(ref_img, dist_imgs, win_size=7, data_range=255.0, beta=0.46, eps=1e-6):
+    """
+    Approximate SSIM using variance-weighted redistribution of global MSE.
+
+    In this formulation, the local MSE is estimated from the global MSE
+    by redistributing distortion according to a sublinear function of
+    the local variance:
+
+        MSE_l ~= MSE_G * ((var_x + eps)**beta / E[(var_x + eps)**beta])
+
+    where:
+        - var_x is the local variance of the reference image
+        - beta in [0, 1] is a shaping exponent
+        - eps is a small constant for numerical stability
+        - E[.] denotes spatial averaging
+
+    The resulting SSIM approximation uses only:
+        - Global MSE
+        - Reference-image statistics
+
+    This model corresponds to the variance-based approach described in
+    the forthcoming work:
+
+        "A Simple Relationship Between SSIM and PSNR for DCT-Based
+         Compressed Images and Video: Modeling Local Error Statistics"
+        Trudeau and Martini (2026).
+    """
     ref, dists = _check_inputs(ref_img, dist_imgs, win_size, data_range=data_range)
     vx = _reference_statistics(ref, win_size, data_range)
     C2 = (0.03 * data_range) ** 2
@@ -131,6 +185,26 @@ def ssim_global_mse_var(ref_img, dist_imgs, win_size=7, data_range=255.0, beta=0
     return np.asarray(out, dtype=np.float64)
 
 def ssim_global_mse_std(ref_img, dist_imgs, win_size=7, data_range=255.0, beta=0.46, eps=1e-6):
+    """
+Approximate SSIM using standard-deviation-weighted redistribution
+    of global MSE.
+
+    This formulation is derived from the sublinear variance model with
+    beta approximately equal to 0.5, leading to a standard-deviation-
+    based weighting:
+
+        MSE_l ~= MSE_G * ((std_x + eps) / E[std_x + eps])
+
+    where:
+        - std_x is the local standard deviation of the reference image
+        - eps is a small constant for numerical stability
+        - E[.] denotes spatial averaging
+
+    Empirical results indicate improved robustness under severe
+    degradation compared to linear variance weighting.
+
+    This method requires only global MSE and reference-image statistics.
+    """
     ref, dists = _check_inputs(ref_img, dist_imgs, win_size, data_range=data_range)
     vx = _reference_statistics(ref, win_size, data_range)
     C2 = (0.03 * data_range) ** 2
