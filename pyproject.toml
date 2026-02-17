@@ -10,8 +10,11 @@ dependencies = [
   "numpy",
   "scipy",
   "scikit-image",
-  "imageio"
+  "pillow"
 ]
+
+[project.scripts]
+approxssimate = "approxssimate.cli:main"
 
 [build-system]
 requires = ["setuptools"]
