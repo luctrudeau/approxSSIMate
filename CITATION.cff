@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+title: "approxssimate"
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+  - family-names: Trudeau
+    given-names: Luc
+    orcid: https://orcid.org/0000-0002-4292-5875
+  - family-names: Martini
+    given-names: Maria G.
+    orcid: https://orcid.org/0000-0002-8710-7550
+repository-code: https://github.com/luctrudeau/approxssimate
+license: BSD-2-Clause
+version: 0.1.0
+date-released: 2026-02-17
