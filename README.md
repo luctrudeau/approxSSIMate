@@ -103,18 +103,18 @@ If your organization benefits from faster SSIM estimation, large-scale encoding 
 #### Tier 1 — Native C Implementation
 
 Develop a production-ready C implementation of the SSIM approximation models:
-	•	Optimized for speed and low memory footprint
-	•	Designed for production integration
-	•	Architecture compatible with libVMAF’s SSIM implementation
-	•	Potential upstream contribution to libVMAF
-	•	Also available as a standalone CLI and embeddable library
+ - Optimized for speed and low memory footprint
+ - Designed for production integration
+ - Architecture compatible with libVMAF’s SSIM implementation
+ - Potential upstream contribution to libVMAF
+ - Also available as a standalone CLI and embeddable library
 
 #### Tier 2 — SIMD Optimizations
 
 Architecture-specific acceleration layers:
-	•	AVX2 / AVX-512 (x86 servers)
-	•	NEON (ARM-based systems)
+ - AVX2 / AVX-512 (x86 servers)
+ - NEON (ARM-based systems)
 
-### How to Support
+### Support & Collaboration
  - Sponsor via GitHub Sponsors [![Sponsor](https://img.shields.io/badge/Sponsor-GitHub-%23EA4AAA?logo=github)](https://github.com/sponsors/luctrudeau)
  - Reach out directly to discuss collaboration or production integration
