@@ -114,3 +114,7 @@ Develop a production-ready C implementation of the SSIM approximation models:
 Architecture-specific acceleration layers:
 	•	AVX2 / AVX-512 (x86 servers)
 	•	NEON (ARM-based systems)
+
+### How to Support
+ - Sponsor via GitHub Sponsors [![Sponsor](https://img.shields.io/badge/Sponsor-GitHub-%23EA4AAA?logo=github)](https://github.com/sponsors/luctrudeau)
+ - Reach out directly to discuss collaboration or production integration
