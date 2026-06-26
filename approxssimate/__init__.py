@@ -2,6 +2,8 @@
 approxssimate: fast SSIM approximations from global MSE and reference statistics.
 """
 
+__version__ = "0.1.0"
+
 from .core import (
     ssim_local_mse,
     ssim_global_mse,

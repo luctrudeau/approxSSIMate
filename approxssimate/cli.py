@@ -19,6 +19,7 @@ See the LICENSE file in the project root for full license information.
 import argparse
 from .core import ssim_reference, ssim_local_mse, ssim_global_mse, ssim_global_mse_var, ssim_global_mse_std
 from PIL import Image
+from .k import compute_k, write_k_file
 import numpy as np
 import time
 
@@ -51,9 +52,50 @@ def main():
     p_glo_s = subparsers.add_parser("global-mse-std", help="Standard deviation-weighted approximation of local MSE from global MSE")
     add_common_args(p_glo_s)
 
+    p_k = subparsers.add_parser("k", help="Compute ApproxSSIMate source calibration k")
+    p_k.add_argument("ref", help="Reference image (8-bit)")
+    p_k.add_argument("-o", "--output", required=True, help="Output .k file")
+    p_k.add_argument("--win-size", type=int, default=7, help="SSIM window size (odd integer >= 3)")
+    p_k.add_argument("--data-range", type=float, default=255.0, help="Sample data range")
+    p_k.add_argument("--beta", type=float, default=0.5, help="Variance exponent")
+    p_k.add_argument("--channel", default="luma", help="Channel used to compute k")
+
     args = parser.parse_args()
 
     ref_img = _load_image(args.ref)
+    
+    if args.cmd == "k":
+        t0 = time.perf_counter()
+
+        ref_img = _load_image(args.ref)
+        h, w = ref_img.shape
+
+        k = compute_k(
+            ref_img,
+            win_size=args.win_size,
+            data_range=args.data_range,
+            beta=args.beta,
+        )
+
+        write_k_file(
+            args.output,
+            source_path=args.ref,
+            width=w,
+            height=h,
+            channel=args.channel,
+            win_size=args.win_size,
+            data_range=args.data_range,
+            beta=args.beta,
+            k_values=[k],
+        )
+
+        t1 = time.perf_counter()
+
+        print(f"Wrote k data to: {args.output}")
+        print(f"k: {k:.17g}")
+        print(f"Processed 1 {w}x{h} image in {t1 - t0:.3f} seconds")
+        return
+
     dist_imgs = [_load_image(p) for p in args.dist]
 
     if args.cmd == "reference":
