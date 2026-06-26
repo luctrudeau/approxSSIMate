@@ -1,6 +1,5 @@
 import json
 import numpy as np
-from pathlib import Path
 from scipy.ndimage import uniform_filter
 from skimage.util import crop
 
@@ -22,7 +21,7 @@ def write_k_file(path,
         "version": K_FILE_VERSION,
         "metric": K_METRIC_NAME,
         "method": method,
-        "source_path": str(Path(source_path).name),
+        "source_path": source_path,
         "width": width,
         "height": height,
         "channel": channel,
