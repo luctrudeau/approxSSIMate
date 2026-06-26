@@ -59,6 +59,18 @@ def _cmd_k(args):
     print(f"k: {k:.17g}")
     print(f"Processed 1 {w}x{h} image in {t1 - t0:.3f} seconds")
 
+def _parse_mses(values):
+    mses = []
+
+    if values is not None:
+        for value in values:
+            try:
+                mses.extend(float(x.strip()) for x in value.split(",") if x.strip())
+            except ValueError as e:
+                raise argparse.ArgumentTypeError(f"Invalid MSE value: {e}") from e
+
+    return mses
+
 def _cmd_ssim(args):
     payload = read_k_file(args.k)
 
@@ -70,32 +82,48 @@ def _cmd_ssim(args):
 
     k = float(k_values[0])
 
-    if args.mse is not None:
+    t0 = time.perf_counter()
+
+    mses = _parse_mses(args.mse)
+    if mses:
         if args.images:
-            raise ValueError("Use either --mse or an image pair, not both.")
-
-        mse = float(args.mse)
+            raise ValueError("Use either --mse or image paths, not both.")
     else:
-        if len(args.images) != 2:
-            raise ValueError("ssim requires either --mse or an image pair: ref dist")
+        if len(args.images) < 2:
+            raise ValueError("ssim requires either --mse or images: ref dist [dist ...]")
 
-        ref_path, dist_path = args.images
+        ref_path = args.images[0]
+        dist_paths = args.images[1:]
 
         ref_img = _load_image(ref_path)
-        dist_img = _load_image(dist_path)
 
-        t0 = time.perf_counter()
-        mse = compute_mse(ref_img, dist_img)
-        t1 = time.perf_counter()
-        
-        h, w = ref_img.shape
-        print(f"Processed 1 {w}x{h} image in {t1 - t0:.3f} seconds")
-    
-    score = approx_ssim_from_k_mse(k, mse)
+        for dist_path in dist_paths:
+            dist_img = _load_image(dist_path)
+            mses.append(compute_mse(ref_img, dist_img))
 
-    print(f"ApproxSSIM: {score:.6f}")
+    scores = [approx_ssim_from_k_mse(k, mse) for mse in mses]
+
+    t1 = time.perf_counter()
+
     print(f"k: {k:.17g}")
-    print(f"MSE: {mse:.6f}")
+    source_path = payload.get("source_path")
+    width = payload.get("width")
+    height = payload.get("height")
+    beta = payload.get("beta")
+
+    if source_path is not None:
+        print(f"source: {source_path}")
+
+    if width is not None and height is not None:
+        print(f"size: {width}x{height}")
+
+    if beta is not None:
+        print(f"beta: {beta}")
+
+    print("\nMSE\tApproxSSIM")
+    for mse, score in zip(mses, scores):
+        print(f"{mse:>12.6f}\t{score:.6f}")
+    print(f"Processed {len(mses)} value(s) in {t1 - t0:.3f} seconds")
 
 def main():
     parser = argparse.ArgumentParser(
@@ -113,8 +141,12 @@ def main():
 
     p_ssim = subparsers.add_parser("ssim", help="Estimate SSIM from an ApproxSSIMate .k file")
     p_ssim.add_argument("-k", required=True, help="Input .k calibration file")
-    p_ssim.add_argument("--mse", type=float, help="Known global MSE")
-    p_ssim.add_argument("images", nargs="*", help="Optional image pair: ref dist")
+    p_ssim.add_argument(
+        "--mse",
+        nargs="+",
+        help="Known global MSE value(s)",
+    )
+    p_ssim.add_argument("images", nargs="*", help="Reference image followed by distorted image(s)")
 
     def add_common_args(p):
         p.add_argument("ref", help="Reference image (8-bit)")
