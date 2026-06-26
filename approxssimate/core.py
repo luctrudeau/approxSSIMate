@@ -21,6 +21,18 @@ from scipy.ndimage import uniform_filter
 from skimage.metrics import structural_similarity as ssim
 from skimage.util import crop
 
+def compute_mse(ref_img, dist_img) -> float:
+    ref = np.asarray(ref_img, dtype=np.float64)
+    dist = np.asarray(dist_img, dtype=np.float64)
+
+    if ref.shape != dist.shape:
+        raise ValueError(
+            f"Image shapes differ: reference {ref.shape}, distorted {dist.shape}"
+        )
+
+    diff = ref - dist
+    return float(np.mean(diff * diff, dtype=np.float64))
+
 def _check_inputs(ref_img, dist_imgs, win_size, data_range):
     if win_size % 2 == 0 or win_size < 3:
         raise ValueError("win_size must be an odd integer >= 3.")

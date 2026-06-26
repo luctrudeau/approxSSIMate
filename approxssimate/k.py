@@ -73,3 +73,13 @@ def compute_k(ref, win_size=7, data_range=255.0, beta=0.5, eps=1e-6):
     inv = weights / (wmean * B2)
 
     return crop(inv, pad).mean(dtype=np.float64)
+
+def approx_ssim_from_k_mse(k: float, mse: float) -> float:
+    """
+    Estimate SSIM from a source-dependent k value and a global MSE.
+
+    The approximation is SSIM ≈ 1 - k * MSE. The result is clipped to
+    [0, 1] because the linear approximation can otherwise produce values
+    outside the valid SSIM range.
+    """
+    return float(np.clip(1.0 - float(k) * float(mse), 0.0, 1.0))
