@@ -1,96 +1,109 @@
 # approxSSIMate
 
+### Fast SSIM approximation from source calibration and MSE
+
+[Paper / preprint] · [Poster]
+
 Lightweight models for approximating SSIM from global distortion signals.
+
+![approxSSIMate calibration workflow](docs/assets/architecture.jpg)
 
 `approxSSIMate` provides fast, reference-based models that approximate
 SSIM using only:
 
-- Global MSE (or PSNR)
-- Local statistics of the reference image
+## News
 
-The goal is to enable SSIM-like reasoning without computing full
-window-based SSIM over both images.
-
-## Why?
-
-Computing SSIM requires local window statistics from both
-the reference and distorted image.
-
-In many practical encoding scenarios:
-
-- The reference image is fixed
-- Multiple distorted versions are evaluated
-- Only global distortion (MSE / PSNR) is available
-
-Examples include:
-
-- Bitrate ladder construction
-- Multi-encoding experiments
-- Convex-hull selection workflows
-- Fast rate–distortion exploration
-
-In such cases, recomputing full SSIM repeatedly can be expensive.
-
-`approxSSIMate` provides fast approximations that reuse
-reference-image statistics and operate from global MSE only.
-
-## Implemented Models
-
-### 1. Reference SSIM
-Full SSIM using scikit-image (baseline comparison).
-
-### 2. Local-MSE SSIM
-SSIM approximation using local MSE as proposed in:
-
-Maria G. Martini,
-*Measuring Objective Image and Video Quality: On the Relationship Between SSIM and PSNR for DCT-Based Compressed Images*,
-IEEE Transactions on Instrumentation and Measurement, 2025.
-
-### 3. Global-MSE SSIM
-SSIM estimated using global MSE and reference local variance.
-
-### 4. Variance-Weighted Global MSE
-Redistributes global MSE proportionally to local variance.
-
-### 5. Standard-Deviation-Weighted Global MSE
-A sublinear (beta ≈ 0.5) variant using standard deviation
-for improved robustness under heavy distortion.
-
-The variance and standard-deviation models are described in an upcoming paper.
+  **June 2026:** Initial research-preview release, **v0.1.0 “Cardiff”**, prepared for QoMEX 2026.
 
 ## Installation
+
+### From PyPI
 
 ```bash
 pip install approxssimate
 ```
 
-## Command-Line Usage
-
-approxSSIMate can be used directly from the command line after installation.
+### From source
 
 ```bash
-approxssimate <mode> reference.png distorted1.png [distorted2.png ...]
+git clone https://github.com/luctrudeau/approxSSIMate.git
+cd approxSSIMate
+pip install -e .
 ```
 
-### Available modes
+### Verify the installation
 
-- reference: Full SSIM computation using scikit-image (baseline reference).
-- local-mse: SSIM approximation using local MSE (requires both images).
-- global-mse: SSIM approximation using only global MSE and reference statistics.
-- global-mse-var: Variance-weighted redistribution of global MSE.
-- global-mse-std: Standard-deviation-weighted redistribution of global MSE.
-
-### Example
 ```bash
-approxssimate global-mse-var ref.png dist_35.jpg dist_50.jpg dist_75.jpg
+approxssimate --help
 ```
-This computes SSIM approximations for multiple distorted images using the variance-based model.
 
-### Notes
+You should see the available command-line modes, including:
 
-- Images are converted to grayscale internally.
-- All distorted images must match the reference resolution.
-- Designed for batch evaluation workflows (e.g., bitrate ladder construction).
+```text
+approxssimate k
+approxssimate ssim
+```
+
+## Quick start
+
+`approxSSIMate` uses a two-step workflow: first compute a source-dependent calibration file from the reference image, then reuse it to estimate SSIM from MSE values or distorted images.
+
+### 1. Compute the source calibration
+
+```bash
+approxssimate k kodim20.png -o kodim20.k
+```
+
+This creates a small JSON `.k` file containing the source-dependent calibration scalar.
+
+### 2. Estimate SSIM from MSE
+
+```bash
+approxssimate ssim --k kodim20.k --mse 12.58 28.17 41.52 53.66
+```
+
+Comma-separated MSE values are also supported:
+
+```bash
+approxssimate ssim --k kodim20.k --mse=12.58,28.17,41.52,53.66
+```
+
+Example output:
+
+```text
+k: 0.0023887065372418942
+source: kodim20.png
+size: 768x512
+beta: 0.5
+
+MSE             ApproxSSIM
+12.582530       0.969944
+28.166527       0.932718
+41.519559       0.900822
+53.657033       0.871829
+
+Processed 4 MSE value(s) in 0.001 seconds
+```
+
+### 3. Estimate SSIM from distorted images
+
+```bash
+approxssimate ssim --k kodim20.k kodim20.png kodim20-6.png kodim20-12.png kodim20-18.png
+```
+
+The first image is the reference. All remaining images are treated as distorted versions of the same source.
+
+## Citation
+
+If you use `approxSSIMate` in your research, please cite the associated QoMEX 2026 paper:
+
+```bibtex
+@inproceedings{trudeau2026estimating,
+  title = {Estimating SSIM from MSE for DCT-Based Compressed Images via Modeling Local Error Statistics},
+  author = {Trudeau, Luc and Martini, Maria G.},
+  booktitle = {17th International Conference on Quality of Multimedia Experience (QoMEX 2026)},
+  year = {2026}
+}
 
 ## Sponsorship
 

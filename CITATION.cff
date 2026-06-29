@@ -1,7 +1,8 @@
 cff-version: 1.2.0
-title: "approxssimate"
-message: "If you use this software, please cite it as below."
+title: "approxSSIMate"
+message: "If you use this software, please cite the associated QoMEX 2026 paper."
 type: software
+
 authors:
   - family-names: Trudeau
     given-names: Luc
@@ -9,7 +10,8 @@ authors:
   - family-names: Martini
     given-names: Maria G.
     orcid: https://orcid.org/0000-0002-8710-7550
-repository-code: https://github.com/luctrudeau/approxssimate
+
+repository-code: https://github.com/luctrudeau/approxSSIMate
 license: BSD-2-Clause
 version: 0.1.0
-date-released: 2026-02-17
+date-released: 2026-06-28
