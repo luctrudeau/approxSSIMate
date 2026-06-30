@@ -2,6 +2,8 @@
 
 Lightweight models for approximating SSIM from global distortion signals.
 
+Presented at QoMEX 2026: [poster PDF](docs/qomex2026-approxssimate-poster.pdf)
+
 `approxSSIMate` provides fast, reference-based models that approximate
 SSIM using only:
 
