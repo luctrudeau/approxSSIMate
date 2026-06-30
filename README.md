@@ -4,14 +4,42 @@ Lightweight models for approximating SSIM from global distortion signals.
 
 Presented at QoMEX 2026: [poster PDF](docs/qomex2026-approxssimate-poster.pdf)
 
-`approxSSIMate` provides fast, reference-based models that approximate
-SSIM using only:
+`approxSSIMate` provides fast, reference-based models that approximate SSIM using only:
 
 - Global MSE (or PSNR)
 - Local statistics of the reference image
 
-The goal is to enable SSIM-like reasoning without computing full
-window-based SSIM over both images.
+The goal is to enable SSIM-like reasoning without computing full window-based SSIM over both images.
+
+## News
+
+  - June 2026: Initial research-preview release, v0.1.0 “Cardiff”, prepared for QoMEX 2026.
+
+## Installation
+
+Install the current research-preview version from source:
+
+```bash
+git clone https://github.com/luctrudeau/approxSSIMate.git
+cd approxSSIMate
+pip install -e .
+```
+
+## Quick start
+
+approxSSIMate uses a two-step workflow:
+  1. Compute a source-dependent calibration file (.k) from the reference image
+```bash
+approxssimate k MY_IMAGE.png -o MY_IMAGE.k
+```
+  2. Use the .k to estimate SSIM from MSE values or distorted images. You can specify either the MSE directly
+```bash
+approxssimate ssim -k MY_IMAGE.k --mse="12.58,28.17,41.52,53.66" 
+```
+Or instead you can specify the distorted image(s)
+```bash
+approxssimate ssim -k MY_IMAGE.k MY_IMAGE.png MY_DISTORTED_IMG_1.png MY_DISTORTED_IMG_2.png MY_DISTORTED_IMG_3.png
+```
 
 ## Why?
 
@@ -36,58 +64,6 @@ In such cases, recomputing full SSIM repeatedly can be expensive.
 `approxSSIMate` provides fast approximations that reuse
 reference-image statistics and operate from global MSE only.
 
-## Implemented Models
-
-### 1. Reference SSIM
-Full SSIM using scikit-image (baseline comparison).
-
-### 2. Local-MSE SSIM
-SSIM approximation using local MSE as proposed in:
-
-Maria G. Martini,
-*Measuring Objective Image and Video Quality: On the Relationship Between SSIM and PSNR for DCT-Based Compressed Images*,
-IEEE Transactions on Instrumentation and Measurement, 2025.
-
-### 3. Global-MSE SSIM
-SSIM estimated using global MSE and reference local variance.
-
-### 4. Variance-Weighted Global MSE
-Redistributes global MSE proportionally to local variance.
-
-### 5. Standard-Deviation-Weighted Global MSE
-A sublinear (beta ≈ 0.5) variant using standard deviation
-for improved robustness under heavy distortion.
-
-The variance and standard-deviation models are described in an upcoming paper.
-
-## Installation
-
-```bash
-pip install approxssimate
-```
-
-## Command-Line Usage
-
-approxSSIMate can be used directly from the command line after installation.
-
-```bash
-approxssimate <mode> reference.png distorted1.png [distorted2.png ...]
-```
-
-### Available modes
-
-- reference: Full SSIM computation using scikit-image (baseline reference).
-- local-mse: SSIM approximation using local MSE (requires both images).
-- global-mse: SSIM approximation using only global MSE and reference statistics.
-- global-mse-var: Variance-weighted redistribution of global MSE.
-- global-mse-std: Standard-deviation-weighted redistribution of global MSE.
-
-### Example
-```bash
-approxssimate global-mse-var ref.png dist_35.jpg dist_50.jpg dist_75.jpg
-```
-This computes SSIM approximations for multiple distorted images using the variance-based model.
-
 ### Notes
 
 - Images are converted to grayscale internally.
@@ -100,7 +76,7 @@ approxSSIMate is an open research project focused on making perceptual quality e
 
 If your organization benefits from faster SSIM estimation, large-scale encoding experiments, bitrate ladder construction, or convex-hull optimization workflows, consider sponsoring the project.
 
-### Roadmap (Funding-Enabled Milestones)
+### Roadmap (Possible sponsored milestones)
 
 #### Tier 1 — Native C Implementation
 
