@@ -11,6 +11,11 @@ from .core import (
     ssim_global_mse_std,
 )
 
+from .k import (
+    compute_k,
+    approx_ssim_from_k_mse,
+)
+
 __all__ = [
     "ssim_local_mse",
     "ssim_global_mse",
