@@ -2,14 +2,7 @@
 approxssimate: fast SSIM approximations from global MSE and reference statistics.
 """
 
-__version__ = "0.1.0"
-
-from .core import (
-    ssim_local_mse,
-    ssim_global_mse,
-    ssim_global_mse_var,
-    ssim_global_mse_std,
-)
+__version__ = "0.2.0"
 
 from .k import (
     compute_k,
@@ -17,8 +10,6 @@ from .k import (
 )
 
 __all__ = [
-    "ssim_local_mse",
-    "ssim_global_mse",
-    "ssim_global_mse_var",
-    "ssim_global_mse_std",
+    "compute_k",
+    "approx_ssim_from_k_mse",
 ]
