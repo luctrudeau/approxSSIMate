@@ -1,5 +1,6 @@
 import json
 import numpy as np
+from numpy.typing import ArrayLike
 from scipy.ndimage import uniform_filter
 from skimage.util import crop
 
@@ -74,12 +75,14 @@ def compute_k(ref, win_size=7, data_range=255.0, beta=0.5, eps=1e-6):
 
     return crop(inv, pad).mean(dtype=np.float64)
 
-def approx_ssim_from_k_mse(k: float, mse: float) -> float:
+def approx_ssim_from_k_mse(k: ArrayLike, mse: ArrayLike) -> np.ndarray:
     """
-    Estimate SSIM from a source-dependent k value and a global MSE.
+    Estimate SSIM from the reference statistic k and MSE.
 
-    The approximation is SSIM ≈ 1 - k * MSE. The result is clipped to
-    [0, 1] because the linear approximation can otherwise produce values
-    outside the valid SSIM range.
+    Supports scalar and array inputs through NumPy broadcasting.
+    Inputs are converted to float64 and the output is clipped to
+    the valid SSIM range [0, 1].
     """
-    return float(np.clip(1.0 - float(k) * float(mse), 0.0, 1.0))
+    k = np.asarray(k, dtype=np.float64)
+    mse = np.asarray(mse, dtype=np.float64)
+    return np.clip(1.0 - k * mse, 0.0, 1.0)

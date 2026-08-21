@@ -13,113 +13,158 @@ See the LICENSE file in the project root for full license information.
 """
 
 import argparse
-from .core import compute_mse
-from .k import compute_k, write_k_file, read_k_file, approx_ssim_from_k_mse
+from itertools import zip_longest
 from pathlib import Path
-from PIL import Image
-
 import numpy as np
 import time
 
-def _load_image(path):
-    return np.array(Image.open(path).convert("L"), dtype=np.float64)
+from .io import iter_frames
+from .k import compute_k, write_k_file, read_k_file, approx_ssim_from_k_mse
+from .mse import compute_mse, write_mse_file, read_mse_file
 
 def _cmd_k(args):
     t0 = time.perf_counter()
 
-    ref_img = _load_image(args.ref)
-    h, w = ref_img.shape
+    k_values = []
+    width = None
+    height = None
 
-    k = compute_k(
-        ref_img,
-        win_size=args.win_size,
-        data_range=args.data_range,
-        beta=args.beta,
-    )
+    for frame in iter_frames(args.ref):
+        if width is None:
+            height, width = frame.shape
+
+        k = compute_k(
+            frame,
+            win_size=args.win_size,
+            data_range=args.data_range,
+            beta=args.beta,
+        )
+
+        k_values.append(k)
+
+    if not k_values:
+        raise ValueError(f"No frames found in: {args.ref}")
 
     write_k_file(
         args.output,
         source_path=Path(args.ref).name,
-        width=w,
-        height=h,
+        width=width,
+        height=height,
         channel=args.channel,
         win_size=args.win_size,
         data_range=args.data_range,
         beta=args.beta,
-        k_values=[k],
+        k_values=k_values,
     )
 
     t1 = time.perf_counter()
 
     print(f"Wrote k data to: {args.output}")
-    print(f"k: {k:.17g}")
-    print(f"Processed 1 {w}x{h} image in {t1 - t0:.3f} seconds")
+    print(f"Processed {len(k_values)} {width}x{height} frames(s) in {t1 - t0:.3f} seconds")
 
-def _parse_mses(values):
-    mses = []
-
-    if values is not None:
-        for value in values:
-            try:
-                mses.extend(float(x.strip()) for x in value.split(",") if x.strip())
-            except ValueError as e:
-                raise argparse.ArgumentTypeError(f"Invalid MSE value: {e}") from e
-
-    return mses
-
-def _cmd_ssim(args):
-    payload = read_k_file(args.k)
-
-    k_values = payload["k"]
-    if len(k_values) != 1:
-        raise ValueError(
-            "The ssim command currently supports only .k files with a single k value."
-        )
-
-    k = float(k_values[0])
-
+def _cmd_mse(args):
     t0 = time.perf_counter()
 
-    mses = _parse_mses(args.mse)
-    if mses:
-        if args.images:
-            raise ValueError("Use either --mse or image paths, not both.")
-    else:
-        if len(args.images) < 2:
-            raise ValueError("ssim requires either --mse or images: ref dist [dist ...]")
+    mses = []
 
-        ref_path = args.images[0]
-        dist_paths = args.images[1:]
+    width = None
+    height = None
 
-        ref_img = _load_image(ref_path)
+    ref_frames = iter_frames(args.ref)
+    dist_frames = iter_frames(args.dist)
 
-        for dist_path in dist_paths:
-            dist_img = _load_image(dist_path)
-            mses.append(compute_mse(ref_img, dist_img))
+    for i, (ref_frame, dist_frame) in enumerate(zip_longest(ref_frames, dist_frames)):
+        if ref_frame is None:
+            raise ValueError(
+                f"Distorted input has more frames than reference "
+                f"(extra frame at index {i})"
+            )
 
-    scores = [approx_ssim_from_k_mse(k, mse) for mse in mses]
+        if dist_frame is None:
+            raise ValueError(
+                f"Reference input has more frames than distorted "
+                f"(missing frame at index {i})"
+            )
+
+        if width is None:
+            height, width = ref_frame.shape
+
+        mses.append(compute_mse(ref_frame, dist_frame))
+
+    if not mses:
+        raise ValueError(
+            f"No frames decoded when comparing "
+            f"{args.ref} and {args.dist}"
+        )
+
+    write_mse_file(
+        args.output,
+        name=args.name,
+        reference_path=Path(args.ref).name,
+        distorted_path=Path(args.dist).name,
+        width=width,
+        height=height,
+        mse_values=mses,
+    )
 
     t1 = time.perf_counter()
 
-    print(f"k: {k:.17g}")
-    source_path = payload.get("source_path")
-    width = payload.get("width")
-    height = payload.get("height")
-    beta = payload.get("beta")
+    print(f"Wrote MSE data to: {args.output}")
+    print(f"Frames: {len(mses)}")
+    print(f"Size: {width}x{height}")
+    print(f"Mean MSE: {np.mean(mses):.6f}")
+    print(f"Processed in {t1 - t0:.3f} seconds")
 
-    if source_path is not None:
-        print(f"source: {source_path}")
+def _cmd_ssim(args):
+    t0 = time.perf_counter()
 
-    if width is not None and height is not None:
-        print(f"size: {width}x{height}")
+    k_payload = read_k_file(args.k)
+    k_values = np.asarray(k_payload["k"], dtype=np.float64)
 
-    if beta is not None:
-        print(f"beta: {beta}")
+    results = []
 
-    print("\nMSE\tApproxSSIM")
-    for mse, score in zip(mses, scores):
-        print(f"{mse:>12.6f}\t{score:.6f}")
-    print(f"Processed {len(mses)} value(s) in {t1 - t0:.3f} seconds")
+    for mse_path in args.mse:
+        mse_payload = read_mse_file(mse_path)
+        mse_values = np.asarray(mse_payload["mse"], dtype=np.float64)
+
+        if k_values.size != 1 and k_values.shape != mse_values.shape:
+            raise ValueError(
+                f"k contains {k_values.size} values, "
+                f"but {mse_path} contains {mse_values.size} MSE values."
+            )
+
+        scores = approx_ssim_from_k_mse(k_values, mse_values)
+
+        results.append({
+            "name": mse_payload.get(
+                "name", Path(mse_path).stem,
+            ),
+            "frames": len(mse_values),
+            "mse": np.mean(mse_values),
+            "ssim": np.mean(scores),
+        })
+            
+    t1 = time.perf_counter()
+
+    name_width = max(len("Name"), max(len(result["name"]) for result in results))
+    print(
+        f"{'Name':<{name_width}}"
+        f"{'Frames':>8}"
+        f"{'Mean MSE':>15}"
+        f"{'Mean ApproxSSIM':>18}"
+    )
+
+    for result in results:
+        print(
+            f"{result['name']:<{name_width}}"
+            f"{result['frames']:>8}"
+            f"{result['mse']:>15.6f}"
+            f"{result['ssim']:>18.6f}"
+        )
+    print(
+        f"\nProcessed {len(results)} MSE file(s) "
+        f"in {t1 - t0:.3f} seconds"
+    )
 
 def main():
     parser = argparse.ArgumentParser(
@@ -128,31 +173,44 @@ def main():
     subparsers = parser.add_subparsers(dest="cmd", required=True)
 
     p_k = subparsers.add_parser("k", help="Compute ApproxSSIMate source calibration k")
-    p_k.add_argument("ref", help="Reference image (8-bit)")
+    p_k.add_argument("ref", help="Reference image or video (8bit)")
     p_k.add_argument("-o", "--output", required=True, help="Output .k file")
     p_k.add_argument("--win-size", type=int, default=7, help="SSIM window size (odd integer >= 3)")
     p_k.add_argument("--data-range", type=float, default=255.0, help="Sample data range")
     p_k.add_argument("--beta", type=float, default=0.5, help="Variance exponent")
     p_k.add_argument("--channel", default="luma", help="Channel used to compute k")
 
-    p_ssim = subparsers.add_parser("ssim", help="Estimate SSIM from an ApproxSSIMate .k file")
-    p_ssim.add_argument("-k", required=True, help="Input .k calibration file")
-    p_ssim.add_argument(
-        "--mse",
-        nargs="+",
-        help="Known global MSE value(s)",
+    p_mse = subparsers.add_parser(
+        "mse", help="Compute frame MSE values between reference and distorted media"
     )
-    p_ssim.add_argument("images", nargs="*", help="Reference image followed by distorted image(s)")
+    p_mse.add_argument("ref", help="Reference image or video (8bit)")
+    p_mse.add_argument("dist", help="Distorted image or video (8bit)")
+    p_mse.add_argument("-o", "--output", required=True, help="Output .mse file")
+    p_mse.add_argument("--name", help="Optional name for this distortion point")
+
+    p_ssim = subparsers.add_parser(
+        "ssim", help="Estimate SSIM from ApproxSSIMate reference and MSE files")
+    p_ssim.add_argument("-k", required=True, help="Input .k reference statistics file")
+    p_ssim.add_argument("-m", "--mse", nargs="+", required=True,
+                        help="Input .mse distortion statistics file(s)")
 
     args = parser.parse_args()
 
-    if args.cmd == "k":
-        _cmd_k(args)
-        return
+    try:
+        if args.cmd == "k":
+            _cmd_k(args)
+            return
+
+        if args.cmd == "mse":
+            _cmd_mse(args)
+            return
     
-    if args.cmd == "ssim":
-        _cmd_ssim(args)
-        return
+        if args.cmd == "ssim":
+            _cmd_ssim(args)
+            return
+
+    except (FileNotFoundError, ValueError) as e:
+        parser.error(str(e))
 
 if __name__ == "__main__":
     main()
