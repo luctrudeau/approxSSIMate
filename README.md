@@ -1,15 +1,19 @@
 # approxSSIMate
 
-Lightweight models for approximating SSIM from global distortion signals.
+approxSSIMate is a lightweight tool for fast SSIM approximation from global distortion measurements and reference statistics.
+
+The tool models the relationship between SSIM and distortion statistics, enabling fast SSIM estimation without computing local SSIM windows. It is designed for image and video quality analysis workflows where many encoding points need to be evaluated efficiently.
 
 Presented at QoMEX 2026: [poster PDF](docs/qomex2026-approxssimate-poster.pdf)
 
-`approxSSIMate` provides fast, reference-based models that approximate SSIM using only:
+## Features
 
-- Global MSE (or PSNR)
-- Local statistics of the reference image
-
-The goal is to enable SSIM-like reasoning without computing full window-based SSIM over both images.
+- Estimate SSIM from MSE and reference statistics.
+- Support for images and videos through a common frame-based interface.
+- Generate reusable reference statistics (`.k`) files.
+- Generate reusable distortion statistics (`.mse`) files.
+- Evaluate multiple distortion points for quality ladder analysis.
+- Lightweight alternative for workflows requiring fast SSIM approximation.
 
 ## News
 
@@ -25,30 +29,54 @@ cd approxSSIMate
 pip install -e .
 ```
 
-## Quick start
+## Workflow
 
-approxSSIMate uses a two-step workflow:
-  1. Compute a source-dependent calibration file (.k) from the reference image
+approxSSIMate uses a 3-step workflow:
+
+### 1. Compute reference statistics (`.k`) file
+
 ```bash
-approxssimate k MY_IMAGE.png -o MY_IMAGE.k
+approxssimate k reference.png -o reference.k
 ```
-  2. Use the .k to estimate SSIM from MSE values or distorted images. You can specify either the MSE directly
+
+or for video
+
 ```bash
-approxssimate ssim -k MY_IMAGE.k --mse="12.58,28.17,41.52,53.66" 
+approxssimate k reference.mp4 -o reference.k
 ```
-Or instead you can specify the distorted image(s)
+
+### 2. Compute Mean Square Error (`.mse`) file
+
 ```bash
-approxssimate ssim -k MY_IMAGE.k MY_IMAGE.png MY_DISTORTED_IMG_1.png MY_DISTORTED_IMG_2.png MY_DISTORTED_IMG_3.png
+approxssimate mse reference.png distorted.png -o distorted.mse
+```
+
+or
+
+```bash
+approxssimate mse reference.mp4 distorted.mp4 -o distorted.mse
+```
+
+### 3. Approximate SSIM (approxSSIMate)
+
+```bash
+approxssimate ssim -k reference.k -m distorted.mse
+```
+
+Multiple distortion points can be evaluated:
+
+```bash
+approxssimate ssim -k reference.k -m quality_95.mse quality_75.mse quality_55.mse
 ```
 
 ## Why?
 
 Computing SSIM requires local window statistics from both
-the reference and distorted image.
+the reference and distorted content.
 
 In many practical encoding scenarios:
 
-- The reference image is fixed
+- The reference content is fixed
 - Multiple distorted versions are evaluated
 - Only global distortion (MSE / PSNR) is available
 
@@ -66,9 +94,19 @@ reference-image statistics and operate from global MSE only.
 
 ### Notes
 
-- Images are converted to grayscale internally.
-- All distorted images must match the reference resolution.
+- Image and video inputs are evaluated using luma samples.
+- Reference and distorted inputs must have matching resolution and frame count.
 - Designed for batch evaluation workflows (e.g., bitrate ladder construction).
+
+### Python API
+
+```python
+from approxssimate import compute_k, approx_ssim_from_k_mse
+
+k = compute_k(reference)
+mse = np.mean((ref - dist) ** 2)
+score = approx_ssim_from_k_mse(k, mse)
+```
 
 ## Sponsorship
 
