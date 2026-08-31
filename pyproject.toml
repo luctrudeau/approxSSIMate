@@ -11,8 +11,10 @@ dependencies = [
   "numpy",
   "scipy",
   "scikit-image",
-  "pillow"
 ]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
 
 [project.scripts]
 approxssimate = "approxssimate.cli:main"
@@ -23,3 +25,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 packages = ["approxssimate"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
