@@ -1,3 +1,17 @@
+"""
+ApproxSSIMate reference-statistics utilities.
+
+Provides functions to:
+  - Compute source calibration coefficients from reference images
+  - Store and load frame-based calibration data
+  - Estimate SSIM from calibration coefficients and MSE values
+
+Copyright (c) 2026, Luc Trudeau and Maria G. Martini
+
+This software is licensed under the BSD 2-Clause License.
+See the LICENSE file in the project root for full license information.
+"""
+
 import json
 import numpy as np
 from numpy.typing import ArrayLike
