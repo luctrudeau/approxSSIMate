@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.2.0 - Unreleased
+## v0.2.0 - Amsterdam - 2026-09-10
 
 ### Breaking changes
 
@@ -21,6 +21,7 @@
 - Added the `.mse` file format for storing distortion statistics.
 - Added `approxssimate mse` command to generate `.mse` files.
 - Added support for processing multiple `.mse` files in a single `ssim` command, enabling quality ladder analysis.
+- Added `write_k_file()` and `read_k_file()` to the public API.
 - Added `write_mse_file()` and `read_mse_file()` to the public API.
 
 ### Changed
