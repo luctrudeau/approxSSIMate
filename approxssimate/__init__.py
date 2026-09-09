@@ -7,6 +7,8 @@ __version__ = "0.2.0"
 from .k import (
     compute_k,
     approx_ssim_from_k_mse,
+    write_k_file,
+    read_k_file
 )
 
 from .mse import (
@@ -17,6 +19,8 @@ from .mse import (
 __all__ = [
     "compute_k",
     "approx_ssim_from_k_mse",
+    "write_k_file",
+    "read_k_file",
     "write_mse_file",
     "read_mse_file",
 ]
