@@ -4,7 +4,21 @@ approxSSIMate is a lightweight tool for fast SSIM approximation from global dist
 
 The tool models the relationship between SSIM and distortion statistics, enabling fast SSIM estimation without computing local SSIM windows. It is designed for image and video quality analysis workflows where many encoding points need to be evaluated efficiently.
 
-Presented at QoMEX 2026: [paper](https://arxiv.org/abs/2608.02549) · [poster PDF](docs/qomex2026-approxssimate-poster.pdf)
+Research presented at QoMEX 2026 and IBC 2026.
+
+## Publications
+
+### IBC 2026
+
+**Scalable SSIM Estimation from PSNR for Per-Title and Context-Adaptive Encoding Workflows**
+
+[IBC article](https://www.ibc.org/accelerating-innovation/reports/scalable-ssim-estimation-from-psnr-for-per-title-and-context-adaptive-encoding-workflows/22794) · [paper PDF](https://files.trud.ca/ibc2026-SSIMfromPSNR.pdf)
+
+### QoMEX 2026
+
+**Estimating SSIM from MSE for DCT-Based Compressed Images via Modeling Local Error Statistics**
+
+[paper](https://arxiv.org/abs/2608.02549) · [poster PDF](docs/qomex2026-approxssimate-poster.pdf)
 
 ## Features
 
@@ -17,8 +31,9 @@ Presented at QoMEX 2026: [paper](https://arxiv.org/abs/2608.02549) · [poster PD
 
 ## News
 
-  - September 2026: v0.2.0 “Amsterdam”, prepared for IBC 2026, adds end-to-end video support, reusable per-frame distortion statistics, and an IBC results exploration notebook.
-  - June 2026: Initial research-preview release, v0.1.0 “Cardiff”, prepared for QoMEX 2026.
+- September 2026: IBC 2026 presentation of *Scalable SSIM Estimation from PSNR for Per-Title and Context-Adaptive Encoding Workflows*.
+- September 2026: v0.2.0 “Amsterdam”, prepared for IBC 2026, adds end-to-end video support, reusable per-frame distortion statistics, and an IBC results exploration notebook.
+- June 2026: Initial research-preview release, v0.1.0 “Cardiff”, prepared for QoMEX 2026.
 
 ## Installation
 
