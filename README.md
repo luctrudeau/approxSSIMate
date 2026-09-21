@@ -8,6 +8,12 @@ Research presented at QoMEX 2026 and IBC 2026.
 
 ## Publications
 
+### Istanbul — v0.3.0
+
+ApproxSSIMate v0.3.0 "Istanbul" extends the project with pooled SSIM estimation and accompanies our MMSP 2026 publication:
+
+**ApproxSSIMate: Fast SSIM Estimation from MSE for Image and Video Coding**
+
 ### IBC 2026
 
 **Scalable SSIM Estimation from PSNR for Per-Title and Context-Adaptive Encoding Workflows**
@@ -31,6 +37,7 @@ Research presented at QoMEX 2026 and IBC 2026.
 
 ## News
 
+- September 2026: v0.3.0 "Istanbul", prepared for MMSP 2026, adds pooled SSIM estimation.
 - September 2026: IBC 2026 presentation of *Scalable SSIM Estimation from PSNR for Per-Title and Context-Adaptive Encoding Workflows*.
 - September 2026: v0.2.0 “Amsterdam”, prepared for IBC 2026, adds end-to-end video support, reusable per-frame distortion statistics, and an IBC results exploration notebook.
 - June 2026: Initial research-preview release, v0.1.0 “Cardiff”, prepared for QoMEX 2026.
@@ -84,6 +91,14 @@ Multiple distortion points can be evaluated:
 ```bash
 approxssimate ssim -k reference.k -m quality_95.mse quality_75.mse quality_55.mse
 ```
+
+To estimate a single pooled SSIM value for the sequence, use `--pooled`:
+
+```bash
+approxssimate ssim reference.k distortion.mse --pooled
+```
+
+This averages the k and MSE values before computing the SSIM estimate.
 
 ## Why?
 

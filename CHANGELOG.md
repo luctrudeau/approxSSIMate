@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.0] - "Istanbul" - 2026-09-21
+
+### Added
+
+- Add optional pooled SSIM estimation to `approx_ssim_from_k_mse()`, using the mean reference statistic `k` and mean MSE to produce a single sequence-level estimate.
+
 ## v0.2.0 - Amsterdam - 2026-09-10
 
 ### Breaking changes

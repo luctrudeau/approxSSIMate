@@ -89,14 +89,24 @@ def compute_k(ref, win_size=7, data_range=255.0, beta=0.5, eps=1e-6):
 
     return crop(inv, pad).mean(dtype=np.float64)
 
-def approx_ssim_from_k_mse(k: ArrayLike, mse: ArrayLike) -> np.ndarray:
+def approx_ssim_from_k_mse(
+        k: ArrayLike,
+        mse: ArrayLike,
+        pooled: bool = False
+) -> np.ndarray:
     """
     Estimate SSIM from the reference statistic k and MSE.
 
     Supports scalar and array inputs through NumPy broadcasting.
-    Inputs are converted to float64 and the output is clipped to
-    the valid SSIM range [0, 1].
+    If pooled is True, the mean k and MSE are used to produce a
+    single-element estimate. Inputs are converted to float64 and
+    the output is clipped to the valid SSIM range [0, 1].
     """
     k = np.asarray(k, dtype=np.float64)
     mse = np.asarray(mse, dtype=np.float64)
+    
+    if pooled:
+        k = np.atleast_1d(np.mean(k))
+        mse = np.atleast_1d(np.mean(mse))
+
     return np.clip(1.0 - k * mse, 0.0, 1.0)
