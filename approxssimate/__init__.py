@@ -2,7 +2,7 @@
 approxssimate: fast SSIM approximations from global MSE and reference statistics.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 from .k import (
     compute_k,

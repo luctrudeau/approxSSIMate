@@ -120,6 +120,7 @@ def _cmd_ssim(args):
 
     k_payload = read_k_file(args.k)
     k_values = np.asarray(k_payload["k"], dtype=np.float64)
+    pooled = args.pooled
 
     results = []
 
@@ -133,7 +134,7 @@ def _cmd_ssim(args):
                 f"but {mse_path} contains {mse_values.size} MSE values."
             )
 
-        scores = approx_ssim_from_k_mse(k_values, mse_values)
+        scores = approx_ssim_from_k_mse(k_values, mse_values, pooled=pooled)
 
         results.append({
             "name": mse_payload.get(
@@ -193,6 +194,8 @@ def main():
     p_ssim.add_argument("-k", required=True, help="Input .k reference statistics file")
     p_ssim.add_argument("-m", "--mse", nargs="+", required=True,
                         help="Input .mse distortion statistics file(s)")
+    p_ssim.add_argument("-p", "--pooled", action="store_true",
+                        help="Pool k and mse values before approximating SSIM")
 
     args = parser.parse_args()
 
