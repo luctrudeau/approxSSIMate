@@ -5,6 +5,10 @@
 ### Added
 
 - Add optional pooled SSIM estimation to `approx_ssim_from_k_mse()`, using the mean reference statistic `k` and mean MSE to produce a single sequence-level estimate.
+- Add `--pooled` support to the `approxssimate ssim` CLI command.
+- Add public reproduction notebook for the MMSP 2026 VTM experiments.
+- Add public reproduction notebook for the MMSP 2026 LIVE image-quality experiments.
+- Add tests covering pooled SSIM estimation through both the Python API and CLI.
 
 ## v0.2.0 - Amsterdam - 2026-09-10
 
