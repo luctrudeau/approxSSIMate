@@ -42,6 +42,12 @@ ApproxSSIMate v0.3.0 "Istanbul" extends the project with pooled SSIM estimation 
 - September 2026: v0.2.0 “Amsterdam”, prepared for IBC 2026, adds end-to-end video support, reusable per-frame distortion statistics, and an IBC results exploration notebook.
 - June 2026: Initial research-preview release, v0.1.0 “Cardiff”, prepared for QoMEX 2026.
 
+## Notebooks
+
+Reproducible experiments, paper results, and exploratory notebooks are available in the [`notebooks/`](notebooks/) directory.
+
+See the [notebooks README](notebooks/README.md) for an overview of the available notebooks and their corresponding publications.
+
 ## Installation
 
 Install the current research-preview version from source:
