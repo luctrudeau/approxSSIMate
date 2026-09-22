@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.3.0] - "Istanbul" - 2026-09-21
+## v0.3.0 - "Istanbul" - 2026-09-22
 
 ### Added
 
@@ -10,7 +10,7 @@
 - Add public reproduction notebook for the MMSP 2026 LIVE image-quality experiments.
 - Add tests covering pooled SSIM estimation through both the Python API and CLI.
 
-## v0.2.0 - Amsterdam - 2026-09-10
+## v0.2.0 - "Amsterdam" - 2026-09-10
 
 ### Breaking changes
 
@@ -44,7 +44,7 @@
   - SSIM approximation
 
 
-## v0.1.0 “Cardiff” - 2026-06-28
+## v0.1.0 - “Cardiff” - 2026-06-28
 
 Initial research-preview release prepared for QoMEX 2026.
 
