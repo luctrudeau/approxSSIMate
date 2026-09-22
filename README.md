@@ -4,8 +4,6 @@ approxSSIMate is a lightweight tool for fast SSIM approximation from global dist
 
 The tool models the relationship between SSIM and distortion statistics, enabling fast SSIM estimation without computing local SSIM windows. It is designed for image and video quality analysis workflows where many encoding points need to be evaluated efficiently.
 
-Research presented at QoMEX 2026 and IBC 2026.
-
 ## Publications
 
 ### Istanbul — v0.3.0
@@ -13,6 +11,8 @@ Research presented at QoMEX 2026 and IBC 2026.
 ApproxSSIMate v0.3.0 "Istanbul" extends the project with pooled SSIM estimation and accompanies our MMSP 2026 publication:
 
 **ApproxSSIMate: Fast SSIM Estimation from MSE for Image and Video Coding**
+
+[Poster](https://files.trud.ca/mmsp2026-poster.pdf)
 
 ### IBC 2026
 
